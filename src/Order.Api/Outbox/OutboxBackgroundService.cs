@@ -28,8 +28,6 @@ namespace Order.Api.Outbox
                 {
                     _logger.LogError(ex, "Error occurred while processing outbox messages");
                 }
-
-                await Task.Delay(_interval, stoppingToken);
             }
 
             _logger.LogInformation("Outbox Background Service is stopping");
@@ -42,10 +40,8 @@ namespace Order.Api.Outbox
 
             var processedCount = await outboxProcessor.Execute(cancellationToken);
 
-            if (processedCount > 0)
-                _logger.LogInformation("Outbox Background Service processed {Count} messages", processedCount);
-
-            await Task.Delay(_interval, cancellationToken);
+            if (processedCount == 0)
+                await Task.Delay(_interval, cancellationToken);
         }
     }
 }

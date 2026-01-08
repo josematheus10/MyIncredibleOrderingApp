@@ -9,11 +9,11 @@ using Order.Api.Data;
 
 #nullable disable
 
-namespace Order.Api.Migrations
+namespace Order.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260108020924_AddOutboxMessages")]
-    partial class AddOutboxMessages
+    [Migration("20260108011453_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace Order.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Order.Api.Data.Entities.OrderEntity", b =>
+            modelBuilder.Entity("Order.Api.Entities.OrderEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -48,42 +48,6 @@ namespace Order.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Orders", (string)null);
-                });
-
-            modelBuilder.Entity("Order.Api.Data.Entities.OutboxMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Error")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ProcessedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RetryCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProcessedAt", "CreatedAt");
-
-                    b.ToTable("OutboxMessages", (string)null);
                 });
 #pragma warning restore 612, 618
         }

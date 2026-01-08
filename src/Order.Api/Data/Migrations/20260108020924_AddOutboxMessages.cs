@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Order.Api.Migrations
+namespace Order.Api.Data.Migrations
 {
     /// <inheritdoc />
     public partial class AddOutboxMessages : Migration

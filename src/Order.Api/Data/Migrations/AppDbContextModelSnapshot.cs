@@ -8,7 +8,7 @@ using Order.Api.Data;
 
 #nullable disable
 
-namespace Order.Api.Migrations
+namespace Order.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot

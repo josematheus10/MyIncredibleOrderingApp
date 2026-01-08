@@ -13,7 +13,7 @@ namespace Order.Api.ExtressTest
         {
             var httpClient = new HttpClient
             {
-                BaseAddress = new Uri("https://localhost:5000")
+                BaseAddress = new Uri("http://localhost:5000")
             };
 
             bool continuar = true;
@@ -88,9 +88,35 @@ namespace Order.Api.ExtressTest
             })
             .WithoutWarmUp()
             .WithLoadSimulations(
-                Simulation.Inject(rate: 300,
-                                  interval: TimeSpan.FromSeconds(1),
-                                  during: TimeSpan.FromMinutes(2))
+                // Warm-up phase: 10 requests/sec for 30 seconds
+                Simulation.RampingInject(rate: 10,
+                                         interval: TimeSpan.FromSeconds(1),
+                                         during: TimeSpan.FromSeconds(30)),
+
+                // Gradual ramp-up: from 10 to 100 requests/sec over 1 minute
+                Simulation.RampingInject(rate: 100,
+                                         interval: TimeSpan.FromSeconds(1),
+                                         during: TimeSpan.FromMinutes(1)),
+
+                // Sustained load: 100 requests/sec for 2 minutes
+                Simulation.Inject(rate: 100,
+                                 interval: TimeSpan.FromSeconds(1),
+                                 during: TimeSpan.FromMinutes(2)),
+
+                // Spike test: 500 requests/sec for 30 seconds
+                Simulation.Inject(rate: 500,
+                                 interval: TimeSpan.FromSeconds(1),
+                                 during: TimeSpan.FromSeconds(30)),
+
+                // Recovery: back to 100 requests/sec for 1 minute
+                Simulation.Inject(rate: 100,
+                                 interval: TimeSpan.FromSeconds(1),
+                                 during: TimeSpan.FromMinutes(1)),
+
+                // Stress test: gradual increase to 1000 requests/sec
+                Simulation.RampingInject(rate: 1000,
+                                         interval: TimeSpan.FromSeconds(1),
+                                         during: TimeSpan.FromMinutes(1))
             );
 
             NBomberRunner
