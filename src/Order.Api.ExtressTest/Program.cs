@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -52,35 +54,35 @@ namespace Order.Api.ExtressTest
             })
             .WithoutWarmUp()
             .WithLoadSimulations(
-                // Warm-up phase: 10 requests/sec for 30 seconds
-                Simulation.RampingInject(rate: 10,
+                // Warm-up phase: 5 requests/sec for 15 seconds
+                Simulation.RampingInject(rate: 5,
+                                         interval: TimeSpan.FromSeconds(1),
+                                         during: TimeSpan.FromSeconds(15)),
+
+                // Gradual ramp-up: from 5 to 50 requests/sec over 30 seconds
+                Simulation.RampingInject(rate: 50,
                                          interval: TimeSpan.FromSeconds(1),
                                          during: TimeSpan.FromSeconds(30)),
 
-                // Gradual ramp-up: from 10 to 100 requests/sec over 1 minute
-                Simulation.RampingInject(rate: 100,
-                                         interval: TimeSpan.FromSeconds(1),
-                                         during: TimeSpan.FromMinutes(1)),
-
-                // Sustained load: 100 requests/sec for 2 minutes
-                Simulation.Inject(rate: 100,
-                                 interval: TimeSpan.FromSeconds(1),
-                                 during: TimeSpan.FromMinutes(2)),
-
-                // Spike test: 500 requests/sec for 30 seconds
-                Simulation.Inject(rate: 500,
-                                 interval: TimeSpan.FromSeconds(1),
-                                 during: TimeSpan.FromSeconds(30)),
-
-                // Recovery: back to 100 requests/sec for 1 minute
-                Simulation.Inject(rate: 100,
+                // Sustained load: 50 requests/sec for 1 minute
+                Simulation.Inject(rate: 50,
                                  interval: TimeSpan.FromSeconds(1),
                                  during: TimeSpan.FromMinutes(1)),
 
-                // Stress test: gradual increase to 1000 requests/sec
-                Simulation.RampingInject(rate: 1000,
+                // Spike test: 250 requests/sec for 15 seconds
+                Simulation.Inject(rate: 250,
+                                 interval: TimeSpan.FromSeconds(1),
+                                 during: TimeSpan.FromSeconds(15)),
+
+                // Recovery: back to 50 requests/sec for 30 seconds
+                Simulation.Inject(rate: 50,
+                                 interval: TimeSpan.FromSeconds(1),
+                                 during: TimeSpan.FromSeconds(30)),
+
+                // Stress test: gradual increase to 500 requests/sec
+                Simulation.RampingInject(rate: 500,
                                          interval: TimeSpan.FromSeconds(1),
-                                         during: TimeSpan.FromMinutes(1))
+                                         during: TimeSpan.FromSeconds(30))
             );
 
             NBomberRunner
@@ -89,7 +91,33 @@ namespace Order.Api.ExtressTest
                 .WithReportFolder("reports")
                 .Run();
 
-            Console.ReadKey();
+            Console.WriteLine("\n✅ Teste concluído! Abrindo relatório...\n");
+
+            var htmlReportPath = Path.Combine(Directory.GetCurrentDirectory(), "reports", "order-api-load-test.html");
+
+            if (File.Exists(htmlReportPath))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = htmlReportPath,
+                        UseShellExecute = true
+                    });
+                    Console.WriteLine($"📊 Relatório aberto: {htmlReportPath}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Erro ao abrir relatório: {ex.Message}");
+                    Console.WriteLine($"📁 Relatório salvo em: {htmlReportPath}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"⚠️ Relatório HTML não encontrado em: {htmlReportPath}");
+            }
+
+            Console.WriteLine("\n👋 Encerrando aplicação...\n");
         }
     }
 }

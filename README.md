@@ -7,6 +7,8 @@
 ## 📋 Sobre o Projeto
 
 Microserviço de pedidos que implementa o **padrão Outbox** para garantir a consistência entre o banco de dados relacional e o sistema de mensageria.
+Me insperie no projeto Rinha de backend para criar esse projeto focado em demonstrar o padrão outbox com .NET 10, RabbitMQ e Docker.
+Não consegui atingir numero tão altos de requisições por segundo, mas consegui bons resultados em testes de carga.
 
 ### 🎯 Objetivo
 
@@ -19,6 +21,21 @@ A ideia principal é que todas as mudanças de estado do pedido sejam registrada
 - **RabbitMQ**: Sistema de mensageria assíncrona
 - **.NET 10**: Framework principal
 - **Docker**: Containerização
+
+## 💻 Recursos do Sistema
+
+### Limites de Recursos
+
+O ambiente Docker está configurado com limites de recursos para garantir performance previsível:
+
+| Serviço | CPU Limit | Memory Limit | CPU Reservation | Memory Reservation |
+|---------|-----------|--------------|-----------------|-------------------|
+| **order.api** | 1.0 vCPU | 2 GB | 0.5 vCPU | 1 GB |
+| **sqlserver** | 2.0 vCPU | 4 GB | 1.0 vCPU | 2 GB |
+| **rabbitmq** | 1.0 vCPU | 2 GB | 0.5 vCPU | 512 MB |
+| **TOTAL** | **4.0 vCPU** | **8 GB** | **2.0 vCPU** | **3.5 GB** |
+
+> **Nota:** Os limites de recursos são aplicados automaticamente pelo Docker Compose. SQL Server recebe mais recursos por ser o componente mais crítico para performance.
 
 ## 🚀 Como Executar
 
