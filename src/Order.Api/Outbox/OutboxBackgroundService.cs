@@ -45,7 +45,7 @@ namespace Order.Api.Outbox
             if (processedCount > 0)
                 _logger.LogInformation("Outbox Background Service processed {Count} messages", processedCount);
 
-            await Task.Delay(_interval, stoppingToken);
+            await Task.Delay(_interval, cancellationToken);
         }
     }
 }
