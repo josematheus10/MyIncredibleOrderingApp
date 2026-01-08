@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "Order.Api.ExtressTest": {
+      "commandName": "Project"
+    }
+  }
+}

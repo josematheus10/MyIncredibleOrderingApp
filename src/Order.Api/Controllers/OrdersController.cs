@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Order.Api.Models;
+using Order.Api.Services;
 
 namespace Order.Api.Controllers
 {
@@ -7,20 +8,29 @@ namespace Order.Api.Controllers
     [Route("[controller]")]
     public class OrdersController : ControllerBase
     {
+        private readonly IOrderService _orderService;
+
+        public OrdersController(IOrderService orderService)
+        {
+            _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
+        }
 
         [HttpPost(Name = "CreateOrder")]
-        public async Task<IActionResult> Post([FromBody] CreateOrderRequest request)
+        public async Task<IActionResult> Post([FromBody] CreateOrderRequest request, CancellationToken cancellationToken)
         {
-            var orderId = Guid.NewGuid();
+            try
+            {
+                var orderId = await _orderService.CreateOrderAsync(
+                    request.CustomerId, 
+                    request.TotalValue, 
+                    cancellationToken);
 
-            //queue.Enqueue(async ct =>
-            //{
-                // processamento pesado
-                await Task.Delay(5000);
-                Console.WriteLine($"Order {orderId} processed");
-           // });
-
-            return Accepted(new { OrderId = orderId } );
+                return Accepted(new { OrderId = orderId });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = "Falha ao cria transação", Message = ex.Message });
+            }
         }
     }
 }

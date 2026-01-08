@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Order.Api.Entities;
+using Order.Api.Data.Entities;
 
 namespace Order.Api.Data
 {
@@ -10,6 +10,7 @@ namespace Order.Api.Data
         }
 
         public DbSet<OrderEntity> Orders { get; set; }
+        public DbSet<OutboxMessageEntity> OutboxMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,6 +38,36 @@ namespace Order.Api.Data
 
                 entity.Property(e => e.CreationDate)
                     .IsRequired();
+            });
+
+            modelBuilder.Entity<OutboxMessageEntity>(entity =>
+            {
+                entity.ToTable("OutboxMessages");
+                
+                entity.HasKey(e => e.Id);
+                
+                entity.Property(e => e.Id)
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.Type)
+                    .HasMaxLength(255)
+                    .IsRequired();
+
+                entity.Property(e => e.Payload)
+                    .IsRequired();
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired();
+
+                entity.Property(e => e.ProcessedAt);
+
+                entity.Property(e => e.Error);
+
+                entity.Property(e => e.RetryCount)
+                    .IsRequired()
+                    .HasDefaultValue(0);
+
+                entity.HasIndex(e => new { e.ProcessedAt, e.CreatedAt });
             });
         }
     }

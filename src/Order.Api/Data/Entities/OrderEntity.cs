@@ -1,4 +1,4 @@
-namespace Order.Api.Entities
+namespace Order.Api.Data.Entities
 {
     public class OrderEntity
     {

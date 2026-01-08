@@ -8,13 +8,15 @@ Order.Api/
 ├─ Models/                     # DTOs (entrada/saída)
 │   └─ CreateOrderRequest.cs
 │
-├─ Entities/                   # Entidades do banco
-│   └─ Order.cs
+
 │
 ├─ Services/                  
 │   ├─ OrderService.cs          # Lógica de negócio
-│   └─ RabbitMqService.cs      # Publicação/consumo RabbitMQ
-│
+│ 
+├─ Messaging/                  # RabbitMQ
+│   ├─ OrderCreatedPublisher.cs # Publica eventos Order
 ├─ Data/                        
-│   ├─ AppDbContext.cs         # DbContext do EF Core
-│   └─ UserRepository.cs       # Operações de CRUD
+│   ├─ AppDbContext.cs          # DbContext do EF Core
+│   ├─ OrderRepository.cs        # Operações de CRUD do User
+│   └─ Entities/                # Entidades do banco
+│       └─ Order.cs
