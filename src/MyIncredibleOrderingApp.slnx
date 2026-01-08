@@ -1,3 +1,9 @@
 <Solution>
+  <Folder Name="/Solution Itens/">
+    <File Path="../README.md" />
+  </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
   <Project Path="Order.Api/Order.Api.csproj" Id="79e88995-0069-4aac-8471-edf307d679b1" />
 </Solution>

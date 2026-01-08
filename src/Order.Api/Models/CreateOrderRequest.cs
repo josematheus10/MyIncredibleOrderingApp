@@ -1,15 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace Order.Api.Dto
+namespace Order.Api.Models
 {
     public record CreateOrderRequest
     {
-        [Required(ErrorMessage = "Id do cliente é obrigatório")]
+        [Required(ErrorMessage = "O campo: clienteId é um Guid obrigatório")]
         [JsonPropertyName("clienteId")]
         public Guid CustomerId { get; set; }
 
-        [Range(0.01, double.MaxValue, ErrorMessage = "O valor total tem que ser maior que zero")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "O campo: valorTotal tem que ser maior que zero")]
         [JsonPropertyName("valorTotal")]
         public decimal TotalValue { get; set; }
 
