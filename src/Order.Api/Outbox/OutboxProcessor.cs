@@ -26,7 +26,7 @@ namespace Order.Api.Outbox
 
         public async Task Execute(int machBatchSize, CancellationToken cancellationToken = default)
         {
-            // 1 - pegue as mensagens não processadas da tabela OutboxMessages
+            // 1 - pegue as mensagens não processadas da tabela OutboxMessages e carrega na memória
             var unprocessedMessages = await _outboxMessageRepository
                 .GetUnprocessedMessagesAsync(machBatchSize, cancellationToken);
 
@@ -37,8 +37,6 @@ namespace Order.Api.Outbox
                 return;
             }
 
-            _logger.LogInformation("Processing {Count} outbox messages in batch", messagesList.Count);
-
             try
             {
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
@@ -48,26 +46,21 @@ namespace Order.Api.Outbox
                 {
                     var payload = JsonSerializer.Deserialize<object>(message.Payload);
                     await _mqPublisher.PublishAsync(payload!, message.Type, cancellationToken);
+
+                    // 3 - somente após todas as publicações bem-sucedidas, marque todas como processadas
+
+                    message.ProcessedAt = DateTime.UtcNow; 
+
+                    _outboxMessageRepository.Update(message);
+
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
                 }
 
-                // 3 - somente após todas as publicações bem-sucedidas, marque todas como processadas
-                var processedAt = DateTime.UtcNow;
-
-                messagesList.ForEach(m =>
-                {
-                    m.ProcessedAt = processedAt;
-                });
-                _outboxMessageRepository.BatchUpdate(messagesList);
-
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
-
-                _logger.LogInformation("Batch of {Count} outbox messages processed and acknowledged successfully", messagesList.Count);
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                _logger.LogError(ex, "Failed to process batch of {Count} outbox messages. All messages will be retried.", messagesList.Count);
                 await Task.Delay(TimeSpan.FromSeconds(10));
             }
         }
