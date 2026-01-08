@@ -8,5 +8,7 @@ namespace Order.Api.Data.Repository
         Task<IEnumerable<OutboxMessageEntity>> GetUnprocessedMessagesAsync(int batchSize = 10, CancellationToken cancellationToken = default);
         Task<OutboxMessageEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         void Update(OutboxMessageEntity outboxMessage);
+
+        void BatchUpdate(IEnumerable<OutboxMessageEntity> outboxMessages);
     }
 }

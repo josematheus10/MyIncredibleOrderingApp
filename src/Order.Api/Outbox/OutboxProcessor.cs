@@ -7,7 +7,6 @@ namespace Order.Api.Outbox
 {
     public class OutboxProcessor
     {
-        private const int machBatchSize = 20;
         private readonly IOutboxMessageRepository _outboxMessageRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMqPublisher<object> _mqPublisher;
@@ -25,7 +24,7 @@ namespace Order.Api.Outbox
             _logger = logger;
         }
 
-        public async Task<int> Execute(CancellationToken cancellationToken = default)
+        public async Task Execute(int machBatchSize, CancellationToken cancellationToken = default)
         {
             // 1 - pegue as mensagens não processadas da tabela OutboxMessages
             var unprocessedMessages = await _outboxMessageRepository
@@ -35,46 +34,42 @@ namespace Order.Api.Outbox
             if (!messagesList.Any())
             {
                 _logger.LogInformation("No unprocessed messages found in outbox");
-                return 0;
+                return;
             }
 
-            _logger.LogInformation("Processing {Count} outbox messages", messagesList.Count);
+            _logger.LogInformation("Processing {Count} outbox messages in batch", messagesList.Count);
 
-            int processedCount = 0;
-
-            foreach (var message in messagesList)
+            try
             {
-                try
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                // 2 - publique todas as mensagens na fila RabbitMQ em lote
+                foreach (var message in messagesList)
                 {
-                    // 2 - publique-as na fila RabbitMQ e aguarde a confirmação (ACK)
                     var payload = JsonSerializer.Deserialize<object>(message.Payload);
                     await _mqPublisher.PublishAsync(payload!, message.Type, cancellationToken);
-
-                    // 3 - somente após ACK confirmado, marque como processada
-                    await _unitOfWork.BeginTransactionAsync(cancellationToken);
-                    
-                    message.ProcessedAt = DateTime.UtcNow;
-                    _outboxMessageRepository.Update(message);
-
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
-
-                    processedCount++;
-                    _logger.LogInformation("Outbox message processed and acknowledged successfully: Id={MessageId}, Type={MessageType}", 
-                        message.Id, message.Type);
                 }
-                catch (Exception ex)
+
+                // 3 - somente após todas as publicações bem-sucedidas, marque todas como processadas
+                var processedAt = DateTime.UtcNow;
+
+                messagesList.ForEach(m =>
                 {
-                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    _logger.LogError(ex, "Failed to process outbox message (ACK not received): Id={MessageId}, Type={MessageType}, RetryCount={RetryCount}", 
-                        message.Id, message.Type, message.RetryCount);
-                }
+                    m.ProcessedAt = processedAt;
+                });
+                _outboxMessageRepository.BatchUpdate(messagesList);
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                _logger.LogInformation("Batch of {Count} outbox messages processed and acknowledged successfully", messagesList.Count);
             }
-
-            _logger.LogInformation("Outbox processing completed. Processed: {ProcessedCount}/{TotalCount}", 
-                processedCount, messagesList.Count);
-
-            return processedCount;
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                _logger.LogError(ex, "Failed to process batch of {Count} outbox messages. All messages will be retried.", messagesList.Count);
+                await Task.Delay(TimeSpan.FromSeconds(10));
+            }
         }
     }
 }

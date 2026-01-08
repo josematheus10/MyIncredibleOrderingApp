@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -16,49 +17,12 @@ namespace Order.Api.ExtressTest
                 BaseAddress = new Uri("http://localhost:5000")
             };
 
-            bool continuar = true;
-            
-            while (continuar)
-            {
-                Console.Clear();
-                Console.WriteLine("╔════════════════════════════════════════╗");
-                Console.WriteLine("║   TESTE DE CARGA - ORDER API           ║");
-                Console.WriteLine("╚════════════════════════════════════════╝");
-                Console.WriteLine();
-                Console.WriteLine("1 - Executar teste de carga");
-                Console.WriteLine("2 - Sair");
-                Console.WriteLine();
-                Console.Write("Escolha uma opção: ");
-                
-                var opcao = Console.ReadLine();
-                
-                switch (opcao)
-                {
-                    case "1":
-                        ExecutarTeste(httpClient);
-                        break;
-                    case "2":
-                        continuar = false;
-                        Console.WriteLine("\nEncerrando...");
-                        break;
-                    default:
-                        Console.WriteLine("\n❌ Opção inválida! Pressione qualquer tecla para continuar...");
-                        Console.ReadKey();
-                        break;
-                }
-            }
-
-            httpClient.Dispose();
-        }
-
-        static void ExecutarTeste(HttpClient httpClient)
-        {
             Console.WriteLine("\n🚀 Iniciando teste de carga...\n");
-            
+
             var scenario = Scenario.Create("create_order_scenario", async context =>
             {
                 var random = new Random();
-                
+
                 var orderRequest = new
                 {
                     clienteId = Guid.NewGuid(),
@@ -71,10 +35,10 @@ namespace Order.Api.ExtressTest
                 try
                 {
                     var response = await httpClient.PostAsync("/Orders", content);
-                    
+
                     if (response.IsSuccessStatusCode)
                     {
-                        return Response.Ok();
+                        return Response.Ok(HttpStatusCode.Accepted);
                     }
                     else
                     {
@@ -124,9 +88,7 @@ namespace Order.Api.ExtressTest
                 .WithReportFileName("order-api-load-test")
                 .WithReportFolder("reports")
                 .Run();
-            
-            Console.WriteLine("\n✅ Teste de carga finalizado! Verifique o relatório detalhado na pasta './reports'");
-            Console.WriteLine("\nPressione qualquer tecla para voltar ao menu...");
+
             Console.ReadKey();
         }
     }

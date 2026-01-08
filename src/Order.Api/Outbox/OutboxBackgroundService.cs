@@ -1,3 +1,7 @@
+using Polly;
+using Polly.CircuitBreaker;
+using System.Threading;
+
 namespace Order.Api.Outbox
 {
     public class OutboxBackgroundService : BackgroundService
@@ -20,28 +24,16 @@ namespace Order.Api.Outbox
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                try
-                {
-                    await ProcessOutboxMessages(stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred while processing outbox messages");
-                }
+                using var scope = _serviceProvider.CreateScope();
+                var outboxProcessor = scope.ServiceProvider.GetRequiredService<OutboxProcessor>();
+
+                await outboxProcessor.Execute(2000,stoppingToken);
+
+                await Task.Delay(_interval, stoppingToken);
             }
 
             _logger.LogInformation("Outbox Background Service is stopping");
         }
-
-        private async Task ProcessOutboxMessages(CancellationToken cancellationToken)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var outboxProcessor = scope.ServiceProvider.GetRequiredService<OutboxProcessor>();
-
-            var processedCount = await outboxProcessor.Execute(cancellationToken);
-
-            if (processedCount == 0)
-                await Task.Delay(_interval, cancellationToken);
-        }
+       
     }
 }

@@ -36,5 +36,10 @@ namespace Order.Api.Data.Repository
         {
             _context.OutboxMessages.Update(outboxMessage);
         }
+
+        public void BatchUpdate(IEnumerable<OutboxMessageEntity> outboxMessages)
+        {
+            _context.OutboxMessages.UpdateRange(outboxMessages);
+        }
     }
 }
