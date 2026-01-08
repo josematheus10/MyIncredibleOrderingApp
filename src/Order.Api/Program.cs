@@ -46,6 +46,27 @@ builder.Services.AddHostedService<OutboxBackgroundService>();
 
 var app = builder.Build();
 
+// Apply migrations automatically
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        
+        logger.LogInformation("Applying database migrations...");
+        context.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while applying database migrations.");
+        throw;
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
