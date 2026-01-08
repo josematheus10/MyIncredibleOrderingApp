@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Order.Api.Data;
 using Order.Api.Data.Repository;
@@ -50,21 +51,38 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    try
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    var configuration = services.GetRequiredService<IConfiguration>();
+    
+    var connectionString = configuration.GetConnectionString("DefaultConnection");
+    
+    // Create database if not exists using master database
+    var connectionStringBuilder = new SqlConnectionStringBuilder(connectionString);
+    var databaseName = connectionStringBuilder.InitialCatalog;
+    connectionStringBuilder.InitialCatalog = "master";
+    var masterConnectionString = connectionStringBuilder.ConnectionString;
+    
+    logger.LogInformation("Checking if database '{DatabaseName}' exists...", databaseName);
+    
+    using (var connection = new SqlConnection(masterConnectionString))
     {
-        var context = services.GetRequiredService<AppDbContext>();
-        var logger = services.GetRequiredService<ILogger<Program>>();
+        await connection.OpenAsync();
         
-        logger.LogInformation("Applying database migrations...");
-        context.Database.Migrate();
-        logger.LogInformation("Database migrations applied successfully.");
+        var checkDbCommand = new SqlCommand(
+            $"IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '{databaseName}') " +
+            $"CREATE DATABASE [{databaseName}]", 
+            connection);
+        
+        await checkDbCommand.ExecuteNonQueryAsync();
+        logger.LogInformation("Database '{DatabaseName}' is ready.", databaseName);
     }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while applying database migrations.");
-        throw;
-    }
+    
+    // Now apply migrations
+    var context = services.GetRequiredService<AppDbContext>();
+    
+    logger.LogInformation("Applying pending migrations...");
+    await context.Database.MigrateAsync();
+    logger.LogInformation("Database migrations applied successfully.");
 }
 
 // Configure the HTTP request pipeline.

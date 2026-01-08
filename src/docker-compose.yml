@@ -6,7 +6,8 @@ services:
       dockerfile: Order.Api/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrderDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrderDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;Encrypt=False;
       - RabbitMQ__HostName=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__UserName=guest
@@ -22,7 +23,7 @@ services:
         condition: service_healthy
     networks:
       - order-network
-    restart: on-failure
+    restart: unless-stopped
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest

@@ -4,7 +4,7 @@ namespace Order.Api.Outbox
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<OutboxBackgroundService> _logger;
-        private readonly TimeSpan _interval = TimeSpan.FromSeconds(30);
+        private readonly TimeSpan _interval = TimeSpan.FromSeconds(5);
 
         public OutboxBackgroundService(
             IServiceProvider serviceProvider,
@@ -40,16 +40,12 @@ namespace Order.Api.Outbox
             using var scope = _serviceProvider.CreateScope();
             var outboxProcessor = scope.ServiceProvider.GetRequiredService<OutboxProcessor>();
 
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                var processedCount = await outboxProcessor.Execute(cancellationToken);
+            var processedCount = await outboxProcessor.Execute(cancellationToken);
 
-                if (processedCount > 0)
-                {
-                    _logger.LogInformation("Outbox Background Service processed {Count} messages", processedCount);
-                }
-            }
-          
+            if (processedCount > 0)
+                _logger.LogInformation("Outbox Background Service processed {Count} messages", processedCount);
+
+            await Task.Delay(_interval, stoppingToken);
         }
     }
 }

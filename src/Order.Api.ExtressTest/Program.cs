@@ -13,7 +13,7 @@ namespace Order.Api.ExtressTest
         {
             var httpClient = new HttpClient
             {
-                BaseAddress = new Uri("https://localhost:65404")
+                BaseAddress = new Uri("https://localhost:5000")
             };
 
             bool continuar = true;
