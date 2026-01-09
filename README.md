@@ -1,4 +1,4 @@
-﻿# 🍺 Zé Incredible Ordering API
+﻿# 🍺 A Incrível Api de pedidos do Zé
 
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=.net)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=flat-square&logo=docker)
