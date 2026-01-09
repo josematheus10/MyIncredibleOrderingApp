@@ -26,6 +26,19 @@ namespace Order.Api.Data.Repository
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<IEnumerable<OutboxMessageEntity>> GetUnprocessedMessagesWithLockAsync(int batchSize = 10, CancellationToken cancellationToken = default)
+        {
+            var sql = @"
+                SELECT TOP(@batchSize) *
+                FROM OutboxMessages WITH (UPDLOCK, READPAST)
+                WHERE ProcessedAt IS NULL
+                ORDER BY CreatedAt";
+
+            return await _context.OutboxMessages
+                .FromSqlRaw(sql, new Microsoft.Data.SqlClient.SqlParameter("@batchSize", batchSize))
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<OutboxMessageEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _context.OutboxMessages

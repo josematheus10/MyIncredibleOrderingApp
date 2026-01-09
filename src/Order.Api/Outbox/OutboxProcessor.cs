@@ -26,20 +26,21 @@ namespace Order.Api.Outbox
 
         public async Task Execute(int machBatchSize, CancellationToken cancellationToken = default)
         {
-            // 1 - pegue as mensagens não processadas da tabela OutboxMessages e carrega na memória
-            var unprocessedMessages = await _outboxMessageRepository
-                .GetUnprocessedMessagesAsync(machBatchSize, cancellationToken);
-
-            var messagesList = unprocessedMessages.ToList();
-            if (!messagesList.Any())
-            {
-                _logger.LogInformation("No unprocessed messages found in outbox");
-                return;
-            }
-
             try
             {
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                // 1 - pegue as mensagens não processadas com bloqueio para evitar duplicação entre instâncias
+                var unprocessedMessages = await _outboxMessageRepository
+                    .GetUnprocessedMessagesWithLockAsync(machBatchSize, cancellationToken);
+
+                var messagesList = unprocessedMessages.ToList();
+                if (!messagesList.Any())
+                {
+                    _logger.LogInformation("No unprocessed messages found in outbox");
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    return;
+                }
 
                 // 2 - publique todas as mensagens na fila RabbitMQ em lote
                 foreach (var message in messagesList)
@@ -47,21 +48,22 @@ namespace Order.Api.Outbox
                     var payload = JsonSerializer.Deserialize<object>(message.Payload);
                     await _mqPublisher.PublishAsync(payload!, message.Type, cancellationToken);
 
-                    // 3 - somente após todas as publicações bem-sucedidas, marque todas como processadas
-
-                    message.ProcessedAt = DateTime.UtcNow; 
-
+                    // 3 - marque como processada
+                    message.ProcessedAt = DateTime.UtcNow;
                     _outboxMessageRepository.Update(message);
-
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
                 }
 
+                // 4 - commit apenas uma vez após processar todas as mensagens
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                _logger.LogInformation("Successfully processed {Count} outbox messages", messagesList.Count);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error processing outbox messages");
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
             }
         }
     }

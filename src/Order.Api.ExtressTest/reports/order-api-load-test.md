@@ -1,0 +1,48 @@
+> test info
+
+
+
+test suite: `nbomber_default_test_suite_name`
+
+test name: `nbomber_default_test_name`
+
+session id: `2026-01-09_00.56.18_session_6782789b`
+
+> scenario stats
+
+
+
+scenario: `create_order_scenario`
+
+  - ok count: `17125`
+
+  - fail count: `0`
+
+  - all data: `0` MB
+
+  - duration: `00:03:00`
+
+load simulations:
+
+  - `ramping_inject`, rate: `5`, interval: `00:00:01`, during: `00:00:15`
+
+  - `ramping_inject`, rate: `50`, interval: `00:00:01`, during: `00:00:30`
+
+  - `inject`, rate: `50`, interval: `00:00:01`, during: `00:01:00`
+
+  - `inject`, rate: `250`, interval: `00:00:01`, during: `00:00:15`
+
+  - `inject`, rate: `50`, interval: `00:00:01`, during: `00:00:30`
+
+  - `ramping_inject`, rate: `500`, interval: `00:00:01`, during: `00:00:30`
+
+|step|ok stats|
+|---|---|
+|name|`global information`|
+|request count|all = `17125`, ok = `17125`, RPS = `95.14`|
+|latency (ms)|min = `4.69`, mean = `17.77`, max = `3595.73`, StdDev = `69.11`|
+|latency percentile (ms)|p50 = `10.23`, p75 = `16.48`, p95 = `42.66`, p99 = `102.4`|
+
+
+
+
