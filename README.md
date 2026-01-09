@@ -203,4 +203,4 @@ src/
 
 ---
 
-Feito com ❤️ utilizando IA como auxiliar, como por exemplo a criação do README.md
+Feito com ❤️ utilizando ajuda de IA 
