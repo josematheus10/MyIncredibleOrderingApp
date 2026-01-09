@@ -7,7 +7,7 @@
 ## 📋 Sobre o Projeto
 
 Microserviço de pedidos que implementa o **padrão Outbox** para garantir a consistência entre o banco de dados relacional e o sistema de mensageria.
-Me insperie no projeto Rinha de backend para criar esse projeto focado em demonstrar o padrão outbox com .NET 10, RabbitMQ e Docker.
+Me inspirei no projeto [Rinha de Backend](https://github.com/zanfranceschi/rinha-de-backend-2025) para criar esse projeto focado em demonstrar o padrão outbox com .NET 10, RabbitMQ e SqlServer.
 
 ### 🎯 Objetivo
 
