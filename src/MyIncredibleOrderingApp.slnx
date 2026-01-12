@@ -3,6 +3,7 @@
     <File Path="../README.md" />
     <File Path=".dockerignore" />
   </Folder>
+  <Project Path="../Order.Api.Test/Order.Api.Test.csproj" Id="79ba6f89-0570-4381-bcc5-04b878df37ca" />
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
