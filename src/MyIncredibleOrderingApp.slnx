@@ -3,10 +3,10 @@
     <File Path="../README.md" />
     <File Path=".dockerignore" />
   </Folder>
-  <Project Path="../Order.Api.Test/Order.Api.Test.csproj" Id="79ba6f89-0570-4381-bcc5-04b878df37ca" />
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
   <Project Path="Order.Api.ExtressTest/Order.Api.ExtressTest.csproj" Id="1fb56ab1-8ede-4acf-bc2f-76c74f56b26c" />
+  <Project Path="Order.Api.Test/Order.Api.Test.csproj" />
   <Project Path="Order.Api/Order.Api.csproj" Id="79e88995-0069-4aac-8471-edf307d679b1" />
 </Solution>
